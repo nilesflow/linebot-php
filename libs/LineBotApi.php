@@ -32,12 +32,21 @@ class LineBotApi extends Base {
 	// チャンネル
 	const CHANNEL_DEFAULT = '1383378250';
 
-	// イベントタイプ 
-	const EVENTTYPE_SINGLE		= '138311608800106203';
-	const EVENTTYPE_MULTIPLE	= '140177271400161403';
+	// イベントタイプ 受信
+	const EVENTTYPE_RECV_SINGLE		= '138311609000106303';
+	const EVENTTYPE_RECV_OPERATION	= '138311609100106403';
+
+	// イベントタイプ 送信
+	const EVENTTYPE_SEND_SINGLE		= '138311608800106203';
+	const EVENTTYPE_SEND_MULTIPLE	= '140177271400161403';
 	
 	// 宛先種別 
 	const TOTYPE_USER	= 1;
+	
+	// opType values
+	// @see https://developers.line.me/bot-api/api-reference#receiving_operations_optype
+	const OPTYPE_ADDED		= 4;
+	const OPTYPE_BLOCKED	= 8;
 	
 	/**
 	 * コンストラクタ
@@ -54,14 +63,15 @@ class LineBotApi extends Base {
 	 * API
 	 ***************************************/
 	/**
-	 * Receiving messages
+	 * Receiving messages|operations
 	 * 
 	 * @api
 	 * @param json $strJson 受信メッセージ
 	 * @return bool|array false or 取得結果
 	 * @see https://developers.line.me/bot-api/api-reference#receiving_messages
+	 * @see https://developers.line.me/bot-api/api-reference#receiving_operations
 	 */
-	public function receiveMessages($json) {
+	public function receiving($json) {
 		$arr = json_decode($json, true);
 		if (is_null($arr)) {
 			$this->printLog('json_decode failed.');
@@ -228,7 +238,7 @@ class LineBotApi extends Base {
 		// メッセージ返信
 		$properties = array(
 			'to' => $to,
-			'eventType' => self::EVENTTYPE_SINGLE,
+			'eventType' => self::EVENTTYPE_SEND_SINGLE,
 			'content' => $content,
 		);
 		return $this->_sendMessages($properties);
@@ -246,7 +256,7 @@ class LineBotApi extends Base {
 		// メッセージ返信
 		$properties = array(
 			'to' => $to,
-			'eventType' => self::EVENTTYPE_MULTIPLE,
+			'eventType' => self::EVENTTYPE_SEND_MULTIPLE,
 			'content' => array(
 				"messageNotified" => 0, // optional
 				"messages" => $messages

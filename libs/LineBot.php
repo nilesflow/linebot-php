@@ -52,7 +52,7 @@ class LineBot extends Base {
 		$this->makeResources();
 		
 		// メッセージ解析処理
-		$results = $this->oApi->receiveMessages($messages);
+		$results = $this->oApi->receiving($messages);
 		if (! $results) {
 			// 失敗した場合は、処理中断。
 			$this->printLog('Receiving Message faild');
@@ -65,9 +65,22 @@ class LineBot extends Base {
 				$logger->printLog('content none.');
 				continue;
 			}
-	
-			// 1件ごとに処理
-			$this->receivedMessage($result['content']);
+
+			$this->printLog($result);
+			// イベント種別で分岐（してみる）
+			switch($result['eventType']) {
+				// Receiving messages
+				case LineBotApi::EVENTTYPE_RECV_SINGLE:
+					// 1件ごとに処理
+					$this->receivedMessage($result['content']);
+					break;
+				// Reciveing operations
+				case LineBotApi::EVENTTYPE_RECV_OPERATION:
+					$this->receivedOperations($result['content']);
+					break;
+				default:
+					break;
+			}
 		}
 	}
 
@@ -265,5 +278,36 @@ class LineBot extends Base {
 
 		// 処理有無を返却
 		return $ret;
+	}
+
+	/**
+	 * Receving Operations
+	 * 
+	 * @param array $content
+	 */
+	protected function receivedOperations($content) {
+		$revision	= $content['revision'];
+		$opType 	= $content['opType'];
+		$params		= $content['params'];
+
+		$this->printLog("revision:".$revision);
+
+		// optype による振り分け
+		switch ($opType) {
+			case LineBotApi::OPTYPE_ADDED:
+				$this->printLog("user added.");
+				break;
+			case LineBotApi::OPTYPE_BLOCKED:
+				$this->printLog("user blocked.");
+				break;
+			default:
+				break;
+		}
+
+		// ユーザ情報取得
+		$mid = $params[0];
+		$ret = $this->oApi->getUserProfile($mid);
+		$this->printLog('user profile information');
+		$this->printLog($ret);
 	}
 }
